@@ -14,7 +14,7 @@ import { LoginComponent } from '../login/login.component';
   styleUrls: ['./landing-page.component.css'],
   providers: [NgbCarouselConfig]
 })
-
+//This is a demo push
 export class LandingPageComponent implements OnInit {
   title = 'ng-carousel-demo';
   productList:IProduct[]=[]
