@@ -2,6 +2,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
 import { IProduct } from '../Home-Interfaces/IProduct';
+import { ApplicationInsights } from '@microsoft/applicationinsights-web';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -10,18 +12,34 @@ export class HomePageService {
 
 
 
- 
+  appInsights: ApplicationInsights;
 
   products: IProduct[]=[];
-  constructor(private http: HttpClient) 
+  constructor(private http: HttpClient)
+
   {
-   
+
+    this.appInsights = new ApplicationInsights({
+
+      config: {
+
+        instrumentationKey: environment.appInsights.instrumentationKey,
+
+        enableAutoRouteTracking: true // option to log all route changes
+
+      }
+
+    });
+
+    this.appInsights.loadAppInsights();
+
   }
+  
 
   //Getting the Products from backend API
   getProducts():Observable<IProduct[]>{
-    //let tempVar = this.http.get<IProduct[]>('https://localhost:5001/api/home/getproducts')
-    let tempVar = this.http.get<IProduct[]>('https://quickcart-backend.azurewebsites.net/api/home/getproducts')
+    let tempVar = this.http.get<IProduct[]>('https://localhost:5001/api/home/getproducts')
+    //let tempVar = this.http.get<IProduct[]>('https://quickcart-backend.azurewebsites.net/api/home/getproducts')
     console.log(tempVar)
     return tempVar
   }
@@ -32,7 +50,8 @@ export class HomePageService {
     pay={cardNumber:CardNumber1,CVV:cvv1,Expiry:ex,ProdCost:cost,ProdID:pid}
     console.log(pay)
 
-    let tempVar = this.http.post<boolean>('http://localhost:7181/api/PaymentFunction',pay)
+    let tempVar = this.http.post<boolean>('https://quickcart-app7.azurewebsites.net/api/PaymentFunction?code=7XUg1mmkJOYe6HLDQw0_VvNmR-R5MUcdsCuRxEN7aADjAzFuPmlDXQ==',pay)
+    //let tempVar = this.http.post<boolean>('http://localhost:7034/api/PaymentFunction',pay)
     return tempVar
   }
 
@@ -40,7 +59,8 @@ export class HomePageService {
   
     console.log(emailID)
 
-    let tempVar = this.http.get<boolean>('https://quickcart-microservice.azurewebsites.net/api/SubscribeFunction?code=pIOIb80woJnaC8N77yQl1nSLxlDAvSa5mw9rli414zaoAzFuF3cBhA==&emailID='+emailID)
+    //let tempVar = this.http.get<boolean>('https://quickcart-microservice.azurewebsites.net/api/SubscribeFunction?code=pIOIb80woJnaC8N77yQl1nSLxlDAvSa5mw9rli414zaoAzFuF3cBhA==&emailID='+emailID)
+    let tempVar = this.http.get<boolean>('https://localhost:5001/api/Customer/AddNewSubscriber?emailID='+emailID)
     console.log(tempVar)
     return tempVar
   }
@@ -65,6 +85,37 @@ export class HomePageService {
     let result=this.http.post<Response>('https://localhost:5001/api/admin/upload',formData).pipe(catchError(this.errorHandler))
     console.log(result)
     return result
+  }
+
+  logPageView(name?: string, url?: string) { // option to call manually
+    this.appInsights.trackPageView({
+      name: name,
+      uri: url
+    });
+  }
+
+ 
+
+  logEvent(name: string, properties?: { [key: string]: any }) {
+    this.appInsights.trackEvent({ name: name}, properties);
+  }
+
+ 
+
+  logMetric(name: string, average: number, properties?: { [key: string]: any }) {
+    this.appInsights.trackMetric({ name: name, average: average }, properties);
+  }
+
+ 
+
+  logException(exception: Error, severityLevel?: number) {
+    this.appInsights.trackException({ exception: exception, severityLevel: severityLevel });
+  }
+
+ 
+
+  logTrace(message: string, properties?: { [key: string]: any }) {
+    this.appInsights.trackTrace({ message: message}, properties);
   }
 
   errorHandler(error: HttpErrorResponse) {
